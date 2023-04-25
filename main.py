@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, render_template, redirect, url_for, flash, abort
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
@@ -84,8 +86,8 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
 
-        if User.query.filter_by(email=form.email.data).first():
-            print(User.query.filter_by(email=form.email.data).first())
+        if User.query.filter_by(email=form.mis.data).first():
+            print(User.query.filter_by(email=form.mis.data).first())
             #User already exists
             flash("You've already signed up with that email, log in instead!")
             return redirect(url_for('login'))
@@ -95,15 +97,22 @@ def register():
             method='pbkdf2:sha256',
             salt_length=8
         )
-        new_user = User(
-            email=form.email.data,
-            name=form.name.data,
-            password=hash_and_salted_password,
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        login_user(new_user)
-        return redirect(url_for("get_all_posts"))
+        mis = form.mis.data
+        studata = json.load(open("static/StudataSYTY.json", 'r', encoding="utf-8"))
+        if str(mis) in studata:
+
+            new_user = User(
+                email=mis,
+                name=form.name.data,
+                password=hash_and_salted_password,
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user)
+            return redirect(url_for("get_all_posts"))
+        else:
+            flash("Enter Valid MIS")
+            return redirect(url_for('register'))
 
     return render_template("register.html", form=form, current_user=current_user)
 
@@ -112,7 +121,7 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        email = form.email.data
+        email = form.mis.data
         password = form.password.data
 
         user = User.query.filter_by(email=email).first()
